@@ -325,11 +325,11 @@ function sendMessage(destTargetId, destRoom) {
 
 function loginSuccess(easyrtcid) {
     selfEasyrtcid = easyrtcid;
-    document.getElementById("iam").innerHTML = "I am " + easyrtcid;
-    refreshRoomList();
+    //document.getElementById("iam").innerHTML = "I am " + easyrtcid;
+    //refreshRoomList();
     isConnected = true;
-    displayFields();
-    document.getElementById("main").className = "connected";
+    //displayFields();
+    //document.getElementById("main").className = "connected";
 }
 
 

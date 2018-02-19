@@ -1,0 +1,40 @@
+1.서버 포트 변경
+C:\development\nodeworkspace\easyrtc\server_example\server.js
+
+// Start Express http server on port 8080 -> 8079
+var webServer = http.createServer(app).listen(8079);
+
+//listen on port 8079
+webServer.listen(8079, function () {
+    console.log('listening on http://localhost:8079');
+});
+
+2.화상채팅 룸 room
+--demo_multiparty.html demo_instant_messaging_rooms.js 추가
+<script type="text/javascript" src="js/demo_instant_messaging_rooms.js"></script>
+
+--appInit 수정
+function appInit(myRoomName)
+....
+easyrtc.easyApp("easyrtc.multiparty", "box0", ["box1", "box2", "box3"], loginSuccess);
+easyrtc.joinRoom(  myRoomName, {},
+					   function() {  console.log("success");},
+						function(errorCode, errorText, roomName) {
+							   easyrtc.showError(errorCode, errorText + ": room name was(" + roomName + ")");
+						 });
+.....
+
+
+--demo_multiparty.html 룸참여 로직 추가
+<body onload="appInit('room1')">
+
+
+--demo_instant_messaging_rooms.js 불필요 로직 주석
+function loginSuccess(easyrtcid) {
+    selfEasyrtcid = easyrtcid;
+    //document.getElementById("iam").innerHTML = "I am " + easyrtcid;
+    //refreshRoomList();
+    isConnected = true;
+    //displayFields();
+    //document.getElementById("main").className = "connected";
+}

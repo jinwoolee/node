@@ -12,8 +12,8 @@ process.title = "node-easyrtc";
 var app = express();
 app.use(serveStatic('static', {'index': ['index.html']}));
 
-// Start Express http server on port 8080
-var webServer = http.createServer(app).listen(8080);
+// Start Express http server on port 8080 -> 8079
+var webServer = http.createServer(app).listen(8079);
 
 // Start Socket.io so it attaches itself to Express server
 var socketServer = socketIo.listen(webServer, {"log level":1});
@@ -53,7 +53,7 @@ var rtc = easyrtc.listen(app, socketServer, null, function(err, rtcRef) {
     });
 });
 
-//listen on port 8080
-webServer.listen(8080, function () {
-    console.log('listening on http://localhost:8080');
+//listen on port 8079
+webServer.listen(8079, function () {
+    console.log('listening on http://localhost:8079');
 });

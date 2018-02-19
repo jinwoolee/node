@@ -1,4 +1,4 @@
-
+ 
 
 var activeBox = -1;  // nothing selected
 var aspectRatio = 4/3;  // standard definition video aspect ratio
@@ -670,7 +670,7 @@ function messageListener(easyrtcid, msgType, content) {
 }
 
 
-function appInit() {
+function appInit(roomName) {
 
     // Prep for the top-down layout manager
     setReshaper('fullpage', reshapeFull);
@@ -690,6 +690,12 @@ function appInit() {
 
     easyrtc.setRoomOccupantListener(callEverybodyElse);
     easyrtc.easyApp("easyrtc.multiparty", "box0", ["box1", "box2", "box3"], loginSuccess);
+	easyrtc.joinRoom(  roomName, {},   
+					   function() {  console.log("success");},
+						function(errorCode, errorText, roomName) {
+							   easyrtc.showError(errorCode, errorText + ": room name was(" + roomName + ")");
+						 });
+									 
     easyrtc.setPeerListener(messageListener);
     easyrtc.setDisconnectListener( function() {
         easyrtc.showError("LOST-CONNECTION", "Lost connection to signaling server");
