@@ -8,15 +8,14 @@ var movieList = [];
 var server = http.createServer(function(req, res){
     var method = req.method.toLowerCase();
     var url = req.url;
-    
-    
+    var accept = req.headers.accept;
 
     if(method == 'post')
         handlePost(req, res);
-    else if(method == 'get' && (url.indexOf("png") > 0 || url.indexOf("jpg") > 0)){
-        console.log('req.headers', req.headers);
+    else if(method == 'get' && url.indexOf("image") > 0){
         var path = __dirname + req.url;
-        res.writeHead(200, { 'Content-Type': 'image/jpeg' })
+        //res.writeHead(200, { 'Content-Type': 'image/jpeg' })
+        res.setHeader('content-type', 'image');
         fs.createReadStream(path).pipe(res);
     }
     else
