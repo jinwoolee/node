@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title></title>
+    </head>
+    <body>
+        <ul>
+        <% movieList.forEach(function(item){ %>
+            <li>
+                <%= item.title %>(<%= item.director %>, <%= item.year %>)
+                <ul>
+                    <% item.reviews.forEach(function(review){ %>
+                        <li><%=review.review%></li>
+                    <% }); %>
+                </ul>
+             </li>
+        <% }); %>
+        </ul>
+    </body>
+</html>
