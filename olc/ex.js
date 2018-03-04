@@ -1,3 +1,4 @@
+/*jslint devel: true */
 console.log('hello');
 
 function add(a, b){
