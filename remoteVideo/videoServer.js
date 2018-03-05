@@ -47,12 +47,15 @@ websocket_server.on('request', function(request){
                 webrtc_discussions[signal.token][conn.id] = true;
             }
             else if (signal.token !== undefined) {
+                console.log('not join');
                 Object.keys(webrtc_discussions[signal.token]).forEach(function(id) {
                     if (id != conn.id) {
-                        webrtc_clients[id].send(message.utf8Data);
+                        connection[id].send(message.utf8Data);
                     }
                 });
             } 
+            console.log('connection :' , connection.length);
+            console.log('webrtc_discussions :' , webrtc_discussions);
         }
     });
 })

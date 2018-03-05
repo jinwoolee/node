@@ -118,10 +118,13 @@
         document.location.hash = token;
 
         signaling_server.onopen = function () {
+            console.log('signaling_server.onopen');
+
             // setup caller signal handler
             signaling_server.onmessage = function (event) {
                 var signal = JSON.parse(event.data);
                 if (signal.type === "callee_arrived") {
+                    console.log('signal.type === callee_arrived');
                     peer_connection.createOffer(function (description) {
                         peer_connection.setLocalDescription(
                             description,
@@ -172,9 +175,12 @@
         call_token = document.location.hash;
 
         signaling_server.onopen = function () {
+            console.log('callee onopen');
             // setup caller signal handler
             signaling_server.onmessage = function (event) {
                 var signal = JSON.parse(event.data);
+
+                console.log('callee signal : ', signal);
                 if (signal.type === "new_ice_candidate") {
                     peer_connection.addIceCandidate(
                         new RTCIceCandidate(signal.candidate)
@@ -192,23 +198,24 @@
                 } else {
                     // extend with your own signal types here
                 };
-
-                // tell the signaling server you have joined the call 
-                signaling_server.send(
-                    JSON.stringify({
-                        token: call_token,
-                        type: "join",
-                    })
-                );
-
-                // let the caller know you have arrived so they can start the call
-                signaling_server.send(
-                    JSON.stringify({
-                        token: call_token,
-                        type: "callee_arrived",
-                    })
-                );
             }
+
+            // tell the signaling server you have joined the call 
+            console.log()
+            signaling_server.send(
+                JSON.stringify({
+                    token: call_token,
+                    type: "join",
+                })
+            );
+
+            // let the caller know you have arrived so they can start the call
+            signaling_server.send(
+                JSON.stringify({
+                    token: call_token,
+                    type: "callee_arrived",
+                })
+            );
 
             document.title = "You are the Callee";
             document.getElementById("loading_state").innerHTML = "One moment please...connecting your call...";
