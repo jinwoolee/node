@@ -140,7 +140,7 @@ function start() {
   if (document.location.hash === "" || document.location.hash === undefined) { // you are the Caller
 
     // create the unique token for this call 
-    var token = Math.round(Math.random()*10000);
+    var token = Date.now()+"-"+Math.round(Math.random()*10000);
     call_token = "#"+token;
 
     // set location.hash to the unique token for this call

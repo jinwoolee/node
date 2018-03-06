@@ -25,15 +25,16 @@ var httpServer = http.createServer(function (req, res) {
 });
 
 var websocket_server = new websocket({
-    httpServer: httpServer/*,
-    autoAcceptConnections : false*/
+    httpServer: httpServer,
+    autoAcceptConnections : true
 });
 
-//websocket_server.on('connect', function(conn){
-websocket_server.on('request', function (request) {
+websocket_server.on('connect', function(conn){
+//websocket_server.on('request', function (request) {
     console.log('connected');
 
-    var conn = request.accept(null, request.origin);
+    //var conn = request.accept(null, request.origin);
+
     connection.push(conn);
 
     conn.id = connection.length - 1;

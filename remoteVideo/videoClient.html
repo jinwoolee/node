@@ -71,9 +71,10 @@
             { "url": "stun:" + stun_server },
         ]
     });
+    //var peer_connection = new RTCPeerConnection(null, null);
 
     peer_connection.onicecandidate = function (ice_event) {
-        console.log('onicecandidate');
+        console.log('onicecandidate : ', ice_event);
         if (ice_event.candidate) {
             signaling_server.send(
                 JSON.stringify({
