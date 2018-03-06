@@ -56,7 +56,7 @@
 
     var call_token = "";
     var rtc_session_description = RTCSessionDescription;
-    var get_user_media = navigator.getUserMedia.bind(navigator);
+    //var get_user_media = navigator.getUserMedia.bind(navigator);
 
     var signaling_server = new WebSocket('ws://localhost:3000');
     
@@ -85,14 +85,14 @@
     };
 
     peer_connection.onaddstream = function (event) {
-        console.log('onaddstream');
+        console.log('onaddstream event', event);
         connect_stream_to_src(event.stream, document.getElementById("remote_video"));
         // hide placeholder and show remote video
         document.getElementById("loading_state").style.display = "none";
         document.getElementById("open_call_state").style.display = "block";
     };
 
-    get_user_media(
+    navigator.getUserMedia(
         {
             "audio": true,
             "video": true
@@ -109,7 +109,7 @@
         console.log('방개설');
 
         // create the unique token for this call 
-        var token = Date.now() + "-" + Math.round(Math.random() * 10000);
+        var token = /*Date.now() + "-" +*/ Math.round(Math.random() * 10000);
         call_token = "#" + token;
 
         
@@ -118,28 +118,18 @@
         document.location.hash = token;
 
         signaling_server.onopen = function () {
-            console.log('signaling_server.onopen');
+            console.log('client signaling_server.onopen');
 
             // setup caller signal handler
             signaling_server.onmessage = function (event) {
+                
+                console.log('signaling_server.onmessage');
+
                 var signal = JSON.parse(event.data);
+                console.log('signal : ', signal);
                 if (signal.type === "callee_arrived") {
                     console.log('signal.type === callee_arrived');
-                    peer_connection.createOffer(function (description) {
-                        peer_connection.setLocalDescription(
-                            description,
-                            function () {
-                                signaling_server.send(
-                                    JSON.stringify({
-                                        token: call_token,
-                                        type: "new_description",
-                                        sdp: description
-                                    })
-                                );
-                            },
-                            log_error
-                        );
-                    });
+                    peer_connection.createOffer(new_description_created, log_error);
                 } else if (signal.type === "new_ice_candidate") {
                     peer_connection.addIceCandidate(new RTCIceCandidate(signal.candidate));
                 } else if (signal.type === "new_description") {
@@ -201,7 +191,6 @@
             }
 
             // tell the signaling server you have joined the call 
-            console.log()
             signaling_server.send(
                 JSON.stringify({
                     token: call_token,
@@ -220,6 +209,23 @@
             document.title = "You are the Callee";
             document.getElementById("loading_state").innerHTML = "One moment please...connecting your call...";
         }
+    }
+
+    // handler to process new descriptions
+    function new_description_created(description) {
+    peer_connection.setLocalDescription(
+        description, 
+        function () {
+            signaling_server.send(
+                JSON.stringify({
+                token:call_token,
+                type:"new_description",
+                sdp:description 
+                })
+            );
+            }, 
+            log_error
+        );
     }
 
     // generic error handler

@@ -47,6 +47,22 @@ if (navigator.getUserMedia) { // WebRTC 1.0 standard compliant browser
     media_element.srcObject = media_stream;
     media_element.play();
   };
+} else if (navigator.mozGetUserMedia) { // early firefox webrtc implementation
+  rtc_peer_connection = mozRTCPeerConnection;
+  rtc_session_description = mozRTCSessionDescription;
+  get_user_media = navigator.mozGetUserMedia.bind(navigator);
+  connect_stream_to_src = function(media_stream, media_element) {
+    media_element.mozSrcObject = media_stream;
+    media_element.play();
+  };
+  stun_server = "74.125.31.127:19302";
+} else if (navigator.webkitGetUserMedia) { // early webkit webrtc implementation
+  rtc_peer_connection = webkitRTCPeerConnection;
+  rtc_session_description = RTCSessionDescription;
+  get_user_media = navigator.webkitGetUserMedia.bind(navigator);
+  connect_stream_to_src = function(media_stream, media_element) {
+    media_element.src = webkitURL.createObjectURL(media_stream);
+  };
 } else {
   alert("This browser does not support WebRTC - visit WebRTC.org for more info");
   webrtc_capable = false;
@@ -87,17 +103,16 @@ var peer_connection; // peer connection object
 
 function start() {
   // create the WebRTC peer connection object
-  peer_connection = new rtc_peer_connection({ // RTCPeerConnection configuration 
+  /*peer_connection = new rtc_peer_connection({ // RTCPeerConnection configuration 
     "iceServers": [ // information about ice servers
       { "url": "stun:"+stun_server }, // stun server info
     ]
-  });
+  });*/
 
-  console.log('rtc_peer_connection, ', peer_connection);
+  peer_connection = new rtc_peer_connection(null, null);
 
   // generic handler that sends any ice candidates to the other peer
   peer_connection.onicecandidate = function (ice_event) {
-    console.log('onicecandidate');
     if (ice_event.candidate) {
       signaling_server.send(
         JSON.stringify({
@@ -110,7 +125,6 @@ function start() {
 
   // display remote video streams when they arrive using local <video> MediaElement
   peer_connection.onaddstream = function (event) {
-    console.log('onaddstream');
     connect_stream_to_src(event.stream, document.getElementById("remote_video"));
     // hide placeholder and show remote video
     document.getElementById("loading_state").style.display = "none";

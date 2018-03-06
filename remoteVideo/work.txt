@@ -1,0 +1,6 @@
+1.Signaling server
+두 디바이스들 사이에 webRTC 컨넥션을 만들어 연결시켜져줄 server
+--> transort 메카니즘으 스펙으로 정해지지 않음.(알아서, websocket, XMLHttpRequest..)
+--> Signaling server를 통해 상대편으로 연결만 되면 됨.
+
+
