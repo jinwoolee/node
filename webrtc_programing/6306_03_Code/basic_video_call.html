@@ -103,13 +103,11 @@ var peer_connection; // peer connection object
 
 function start() {
   // create the WebRTC peer connection object
-  /*peer_connection = new rtc_peer_connection({ // RTCPeerConnection configuration 
+  peer_connection = new rtc_peer_connection({ // RTCPeerConnection configuration 
     "iceServers": [ // information about ice servers
       { "url": "stun:"+stun_server }, // stun server info
     ]
-  });*/
-
-  peer_connection = new rtc_peer_connection(null, null);
+  });
 
   // generic handler that sends any ice candidates to the other peer
   peer_connection.onicecandidate = function (ice_event) {
@@ -135,12 +133,13 @@ function start() {
   setup_video();
 
   // setup generic connection to the signaling server using the WebSocket API
+  //signaling_server = new WebSocket("ws://192.168.22.58:1234");
   signaling_server = new WebSocket("ws://localhost:1234");
 
   if (document.location.hash === "" || document.location.hash === undefined) { // you are the Caller
 
     // create the unique token for this call 
-    var token = Math.round(Math.random()*10000);
+    var token = Date.now()+"-"+Math.round(Math.random()*10000);
     call_token = "#"+token;
 
     // set location.hash to the unique token for this call

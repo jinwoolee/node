@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="./css/common.css" />
+    <script src="./js/adapter.js"></script>
+</head>
+
+<body>
+    <div id="loading_state">loading...</div>
+    <div id="open_call_state">
+        <video id="remote_video"></video>
+        <video id="local_video"></video>
+    </div>
+</body>
+<script>
+
+    var signaling_server = new WebSocket('ws://localhost:3000');
+
+    /*getUserMedia({audio:true, video:true}, gotStream,
+    function(error) {
+      trace("getUserMedia error: ", error);
+    });*/
+</script>
+</html>

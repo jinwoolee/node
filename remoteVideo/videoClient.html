@@ -85,9 +85,11 @@
         }
     };
 
-    peer_connection.onaddstream = function (event) {
-        console.log('onaddstream event', event);
-        connect_stream_to_src(event.stream, document.getElementById("remote_video"));
+    //peer_connection.onaddstream = function (event) {
+        //console.log('onaddstream event', event);
+    peer_connection.ontrack = function (event) {
+        console.log('ontarck event', event);
+        connect_stream_to_src(event.streams[0], document.getElementById("remote_video"));
         // hide placeholder and show remote video
         document.getElementById("loading_state").style.display = "none";
         document.getElementById("open_call_state").style.display = "block";

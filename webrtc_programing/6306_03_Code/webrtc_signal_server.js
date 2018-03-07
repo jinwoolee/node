@@ -66,19 +66,12 @@ fs.readFile("basic_video_call.html", function(error, data) {
 
 // web socket functions
 var websocket_server = new websocket({
-  httpServer: http_server,
-  autoAcceptConnections : true
+  httpServer: http_server
 });
+websocket_server.on("request", function(request) {
+  log_comment("new request ("+request.origin+")");
 
-websocket_server.on("connect", function(conn) {
-  //console.log('websocket_server.on(connection)');
-//});
-
-//websocket_server.on("request", function(request) {
-  //log_comment("new request ("+request.origin+")");
-
-  //var connection = request.accept(null, request.origin);
-  var connection = conn;
+  var connection = request.accept(null, request.origin);
   log_comment("new connection ("+connection.remoteAddress+")");
 
   webrtc_clients.push(connection);
