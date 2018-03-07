@@ -30,6 +30,10 @@ websocket_server.on('connect', function(conn){
         console.log('connectionId : ', item.id);
     });
 
+    conn.on('message', function(message) {
+        console.debug('message : ', message);
+    });
+
     conn.on('close', function(reasonCode, description){
 
         console.log('reasonCode : ', reasonCode);
