@@ -21,7 +21,12 @@ var websocket_server = new websocket({
 var connectionList = [];
 var idIndex = 0;
 websocket_server.on('connect', function(conn){
-    
+    console.log("websocket_server.on('connect')");
+
+/*websocket_server.on('request', function(request){    
+    console.log("websocket_server.on('request11')");
+    var conn = request.accept(null, request.origin);*/
+
     //임의 아이디 부여
     conn.id = 'ID_' + idIndex++;
 
@@ -31,7 +36,21 @@ websocket_server.on('connect', function(conn){
     });
 
     conn.on('message', function(message) {
-        console.debug('message : ', message);
+        console.log('message : ', message);
+        if(message.type == 'utf8'){
+            data = JSON.parse(message.utf8Data);
+            
+            //if(data.type == 'join'){
+                connectionList.forEach(function(item){
+                    if(item.id != conn.id){
+                        console.log("from ", conn.id, ' ==> to : ', item.id);
+                        data.joinid = conn.id;
+                        item.send(JSON.stringify(data));
+                    }
+                });
+            //}
+            
+        }
     });
 
     conn.on('close', function(reasonCode, description){
@@ -45,10 +64,11 @@ websocket_server.on('connect', function(conn){
             if(item.id == conn.id)
                 delIdx = idx;
         });
-        connectionList.splice(delIdx, 1);
+
+        if(delIdx > 0)
+            connectionList.splice(delIdx, 1);
         console.log('after connectionList.length : ', connectionList.length);
-    });
-    
+    });    
 });
 
 httpServer.listen(3000);

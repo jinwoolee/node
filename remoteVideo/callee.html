@@ -6,7 +6,6 @@
     <title>Document</title>
     <link rel="stylesheet" type="text/css" href="./css/common.css" />
     <script src="./js/adapter.js"></script>
-    <script src="./js/caller.js"></script>
 </head>
 
 <body>
@@ -21,9 +20,6 @@
     var servers;
     var peerConnection;
     var localStream;
-
-    var remoteConnection;
-    var remoteStream;
 
     function showVideoLayout() {
         document.querySelector("#loading_state").style.display = "none";
@@ -66,8 +62,8 @@
     function gotLocalDescription(description) {
         peerConnection.setLocalDescription(description);
         console.debug("Offer from localPeerConnection: \n" + description.sdp);
-        remoteConnection.setRemoteDescription(description);
-        remoteConnection.createAnswer(gotRemoteDescription, handleError);
+        //remoteConnection.setRemoteDescription(description);
+        //remoteConnection.createAnswer(gotRemoteDescription, handleError);
     }
 
     function handleError(error) {
@@ -93,28 +89,19 @@
     }
 
     // handle signals as a caller
-    function caller_signal_handler(event) {
+    function callee_signal_handler(event) {
         var signal = JSON.parse(event.data);
         console.log('signal', signal);
-        //if (signal.type === "callee_arrived") {
-        if (signal.type === "join") {
-            peerConnection.createOffer(
-                new_description_created,
-                handleError
-            );
-        } else if (signal.type === "new_ice_candidate") {
+        if (signal.type === "new_ice_candidate") {
             peerConnection.addIceCandidate(
                 new RTCIceCandidate(signal.candidate)
             );
         } else if (signal.type === "new_description") {
-            console.log("caller signal handler : new_description");
             peerConnection.setRemoteDescription(
                 new RTCSessionDescription(signal.sdp),
                 function () {
-                    console.log("peerConnection.remoteDescription.type == 'answer'");
-                    if (peerConnection.remoteDescription.type == "answer") {
-                        console.log('peerConnection.remoteDescription.type == "answer"');
-                        // extend with your own custom answer handling here
+                    if (peerConnection.remoteDescription.type == "offer") {
+                        peerConnection.createAnswer(new_description_created, handleError);
                     }
                 },
                 handleError
@@ -134,25 +121,13 @@
         peerConnection.addStream(localStream);
         //peerConnection.createOffer(gotLocalDescription, handleError);
 
-        // display remote video streams when they arrive using local <video> MediaElement
-        peerConnection.onaddstream = function (event) {
-            console.log('onaddStream');
-            var remoteVideo = document.querySelector("#remote_video");
-            remoteVideo.src = URL.createObjectURL(event.stream);
-            remoteVideo.play();
-            //connect_stream_to_src(event.stream, document.getElementById("remote_video"));
-
-            document.getElementById("loading_state").style.display = "none";
-            document.getElementById("open_call_state").style.display = "block";
-        };
-
         signaling_server = new WebSocket('ws://localhost:3000');
 
         signaling_server.onopen = function () {
             console.log('signaling_server open');
 
             // setup caller signal handler
-            signaling_server.onmessage = caller_signal_handler;
+            signaling_server.onmessage = callee_signal_handler;
 
             // tell the signaling server you have joined the call 
             signaling_server.send(
