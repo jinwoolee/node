@@ -29,6 +29,7 @@ websocket_server.on('connect', function(conn){
 
     //임의 아이디 부여
     conn.id = 'ID_' + idIndex++;
+    conn.send(JSON.stringify({type : 'registId', id : conn.id}));
 
     connectionList.push(conn);
     connectionList.forEach(function(item, idx){
@@ -36,15 +37,16 @@ websocket_server.on('connect', function(conn){
     });
 
     conn.on('message', function(message) {
-        console.log('message : ', message);
+        console.log('conn.on message');
         if(message.type == 'utf8'){
             data = JSON.parse(message.utf8Data);
-            
+            console.log('conn.on message : ', data.type);
+
             //if(data.type == 'join'){
                 connectionList.forEach(function(item){
                     if(item.id != conn.id){
                         console.log("from ", conn.id, ' ==> to : ', item.id);
-                        data.joinid = conn.id;
+                        data.id = conn.id;
                         item.send(JSON.stringify(data));
                     }
                 });
