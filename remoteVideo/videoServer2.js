@@ -42,12 +42,17 @@ websocket_server.on('connect', function(conn){
             data = JSON.parse(message.utf8Data);
             console.log('conn.on message userGb : ', data.userGb, ' / data.type : ', data.type );
 
-            if(data.userGb == 'callee' && 
+            /*if(data.userGb == 'callee' && 
                (data.type == 'new_description' || data.type == 'new_ice_candidate')){
                    console.log('userGb : ', data.userGb, ' / data.type : ', data.type );
                     connectionList[0].send(JSON.stringify(data));
             }
-            else{
+            else if(data.userGb == 'caller' && 
+               (data.type == 'new_description' || data.type == 'new_ice_candidate')){
+                   console.log('userGb : ', data.userGb, ' / data.type : ', data.type );
+                    connectionList[0].send(JSON.stringify(data));
+            }
+            else{*/
                 connectionList.forEach(function(item){
                     if(item.id != conn.id){
                         console.log("from ", conn.id, ' ==> to : ', item.id);
@@ -55,7 +60,7 @@ websocket_server.on('connect', function(conn){
                         item.send(JSON.stringify(data));
                     }
                 });
-            }
+            //}
         }
     });
 

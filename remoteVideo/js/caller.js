@@ -1,13 +1,10 @@
 var signaling_server;
 var servers;
-//var peerConnection;
 var myId;
 var peerConnections = [];
 var connectionId = {};
-//var currentPeerConnection;
 var currentCalleeId;
 var callerDescription;
-var eventStream = [];
 
 function showVideoLayout() {
     document.querySelector("#loading_state").style.display = "none";
@@ -60,12 +57,10 @@ function makePeerConnection(stream) {
             if(remoteVideo.src == ""){
                 remoteVideo.src = URL.createObjectURL(event.stream);
                 remoteVideo.play();
-                eventStream.push(event.stream);
             }
             else{
                 remoteVideo2.src = URL.createObjectURL(event.stream);
                 remoteVideo2.play();
-                eventStream.push(event.stream);
             }
                 
             document.getElementById("loading_state").style.display = "none";
@@ -147,7 +142,6 @@ function caller_signal_handler(event) {
                 if(item.use == false){
                     item.use = true;
                     peerConnection = item;
-                    currentPeerConnection = item;
                     currentCalleeId = signal.id;
                     break;
                 }

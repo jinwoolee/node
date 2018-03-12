@@ -1,7 +1,10 @@
 var signaling_server;
 var servers;
-var peerConnection;
 var myId;
+var peerConnections = [];
+var connectionId = {};
+var currentCalleeId;
+var callerDescription;
 
 function showVideoLayout() {
     document.querySelector("#loading_state").style.display = "none";
@@ -49,6 +52,7 @@ function handleError(error) {
 
 function new_description_created(description) {
     console.log('new_description_created');
+    var peerConnection = connectionId[currentCalleeId];
     peerConnection.setLocalDescription(
         description,
         function () {
@@ -72,20 +76,35 @@ function makePeerConnection(stream) {
     peerConnection = new RTCPeerConnection({"iceServers": [
         { "url": "stun:" + stun_server },
     ]});*/
-    peerConnection = new RTCPeerConnection(servers);
-    peerConnection.onicecandidate = iceCandidate;
-    peerConnection.addStream(stream);
+    
+    for(var i = 0; i < 3; i++){
+        var peerConnection = new RTCPeerConnection(servers);
+        peerConnection.use = false;
+        peerConnection.onicecandidate = iceCandidate;
+        peerConnection.addStream(stream);
 
-    // display remote video streams when they arrive using local <video> MediaElement
-    peerConnection.onaddstream = function (event) {
-        console.log('onaddStream');
-        var remoteVideo = document.querySelector("#remote_video");
-        remoteVideo.src = URL.createObjectURL(event.stream);
-        remoteVideo.play();
+        // display remote video streams when they arrive using local <video> MediaElement
+        peerConnection.onaddstream = function (event) {
+            console.log('onaddStream');
+            
+            var remoteVideo = document.querySelector("#remote_video");
+            var remoteVideo2 = document.querySelector("#remote_video2");
 
-        document.getElementById("loading_state").style.display = "none";
-        document.getElementById("open_call_state").style.display = "block";
-    };
+            if(remoteVideo.src == ""){
+                remoteVideo.src = URL.createObjectURL(event.stream);
+                remoteVideo.play();
+            }
+            else{
+                remoteVideo2.src = URL.createObjectURL(event.stream);
+                remoteVideo2.play();
+            }
+                
+            document.getElementById("loading_state").style.display = "none";
+            document.getElementById("open_call_state").style.display = "block";
+            
+        };
+        peerConnections.push(peerConnection);
+    }
 
     signaling_server = new WebSocket('ws://localhost:3000');
 
@@ -113,13 +132,37 @@ function callee_signal_handler(event) {
 
     if (signal.type === "registId")
         myId = signal.id;
-    else{    
-        if (signal.type === "new_ice_candidate" && peerConnection.localDescription.type == '') {
+    else{
+        
+        var peerConnection = connectionId[signal.id];
+        if(peerConnection == null){
+            for(var i = 0; i < peerConnections.length; i++){
+                var item =  peerConnections[i];
+                if(item.use == false){
+                    item.use = true;
+                    peerConnection = item;
+                    currentCalleeId = signal.id;
+                    connectionId[signal.id] = peerConnection;
+                    break;
+                }
+            }
+        }
+
+        if (signal.type === "join") {
+            peerConnection.id = signal.id;
+            connectionId[signal.id] = peerConnection;
+            peerConnection.createOffer(
+                new_description_created,
+                handleError
+            );
+        }
+
+        else if (signal.type === "new_ice_candidate"/* && peerConnection.localDescription.type == ''*/) {
             console.log('signal.type === "new_ice_candidate"');
             peerConnection.addIceCandidate(
                 new RTCIceCandidate(signal.candidate)
             );
-        } else if (signal.type === "new_description"  && peerConnection.remoteDescription.type == '') {
+        } else if (signal.type === "new_description"  /*&& peerConnection.remoteDescription.type == ''*/) {
             console.log('signal.type === "new_description"');
             peerConnection.setRemoteDescription(
                 new RTCSessionDescription(signal.sdp),
