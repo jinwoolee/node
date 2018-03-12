@@ -11,13 +11,6 @@ function showVideoLayout() {
     document.querySelector("#open_call_state").style.display = "block";
 }
 
-function streamError(error) {
-    console.debug('streamError');
-}
-
-/*  media(video, audio 설정)
-    해당 피씨의 media리소스를 확보에 성공하면 streamScuccess를 호출
-    실해할 경우 streamError를 호출 */
 function setupMedia() {
     getUserMedia({
         audio: true,
@@ -25,7 +18,6 @@ function setupMedia() {
     }, streamSuccess, streamError);
 }
 
-/*  media 확보 성공 핸들러  */
 function streamSuccess(stream) {
     showVideoLayout();
     var localVideo = document.querySelector("#local_video");
@@ -35,6 +27,47 @@ function streamSuccess(stream) {
     makePeerConnection(stream);
 }
 
+function streamError(error) {
+    console.debug('streamError');
+}
+
+function iceCandidate(ice_event) {
+    if (ice_event.candidate) {
+        console.log("caller ICE candidate");
+        signaling_server.send(
+            JSON.stringify({
+                type: "new_ice_candidate",
+                candidate: ice_event.candidate,
+                id : myId
+            })
+        );
+    }
+}
+
+function handleError(error) {
+    console.debug("error ", error);
+}
+
+function new_description_created(description) {
+    console.log('new_description_created');
+    var peerConnection = connectionId[currentCalleeId];
+    
+    peerConnection.setLocalDescription(
+        description,
+        function () {
+            console.log('new_description_created send');
+            signaling_server.send(
+                JSON.stringify({
+                    token: 'room',
+                    type: 'new_description',
+                    sdp: description,
+                    id : myId
+                })
+            );
+        },
+        handleError
+    );
+}
 function makePeerConnection(stream) {
     /*var stun_server = "stun.l.google.com:19302";
     peerConnection = new RTCPeerConnection({"iceServers": [
@@ -89,43 +122,6 @@ function makePeerConnection(stream) {
     };
 }
 
-function iceCandidate(ice_event) {
-    if (ice_event.candidate) {
-        console.log("caller ICE candidate");
-        signaling_server.send(
-            JSON.stringify({
-                type: "new_ice_candidate",
-                userGb : 'caller',
-                candidate: ice_event.candidate
-            })
-        );
-    }
-}
-
-function handleError(error) {
-    console.debug("error ", error);
-}
-
-function new_description_created(description) {
-    console.log('new_description_created');
-    var peerConnection = connectionId[currentCalleeId];
-    
-    peerConnection.setLocalDescription(
-        description,
-        function () {
-            console.log('new_description_created send');
-            signaling_server.send(
-                JSON.stringify({
-                    token: 'room',
-                    type: 'new_description',
-                    userGb : 'caller',
-                    sdp: description
-                })
-            );
-        },
-        handleError
-    );
-}
 
 // handle signals as a caller
 function caller_signal_handler(event) {
@@ -135,7 +131,9 @@ function caller_signal_handler(event) {
     if (signal.type === "registId")
         myId = signal.id;
     else{
+        
         var peerConnection = connectionId[signal.id];
+        
         if(peerConnection == null){
             for(var i = 0; i < peerConnections.length; i++){
                 var item =  peerConnections[i];
@@ -143,23 +141,28 @@ function caller_signal_handler(event) {
                     item.use = true;
                     peerConnection = item;
                     currentCalleeId = signal.id;
+                    connectionId[signal.id] = peerConnection;
                     break;
                 }
             }
         }
+        console.log('caller_signal_handler : ', signal.id, ' / peerConneion is null?' , peerConnection == undefined);
 
         if (signal.type === "join") {
+            console.log('join from : ', signal.id);
             peerConnection.id = signal.id;
-            connectionId[signal.id] = peerConnection;
             peerConnection.createOffer(
                 new_description_created,
                 handleError
             );
-        } else if (signal.type === "new_ice_candidate") {
+        }
+        else if (signal.type === "new_ice_candidate") {
+            console.log('new_ice_candidate : ', signal.id);
             peerConnection.addIceCandidate(
                 new RTCIceCandidate(signal.candidate)
             );
-        } else if (signal.type === "new_description") {
+        }
+        else if (signal.type === "new_description") {
             console.log("caller signal handler : new_description");
             peerConnection.setRemoteDescription(
                 new RTCSessionDescription(signal.sdp),

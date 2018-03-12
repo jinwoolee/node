@@ -21,7 +21,7 @@ var websocket_server = new websocket({
 var connectionList = [];
 var idIndex = 0;
 websocket_server.on('connect', function(conn){
-    console.log("websocket_server.on('connect')");
+    //console.log("websocket_server.on('connect')");
 
 /*websocket_server.on('request', function(request){    
     console.log("websocket_server.on('request11')");
@@ -37,10 +37,10 @@ websocket_server.on('connect', function(conn){
     });
 
     conn.on('message', function(message) {
-        console.log('conn.on message');
+        //console.log('conn.on message');
         if(message.type == 'utf8'){
             data = JSON.parse(message.utf8Data);
-            console.log('conn.on message userGb : ', data.userGb, ' / data.type : ', data.type );
+            console.log('conn.on message conn.id : ', conn.id, ' / data.type : ', data.type );
 
             /*if(data.userGb == 'callee' && 
                (data.type == 'new_description' || data.type == 'new_ice_candidate')){
@@ -55,8 +55,8 @@ websocket_server.on('connect', function(conn){
             else{*/
                 connectionList.forEach(function(item){
                     if(item.id != conn.id){
-                        console.log("from ", conn.id, ' ==> to : ', item.id);
-                        data.id = conn.id;
+                        console.log("from ", conn.id, ' ==> to : ', item.id, '\n');
+                        //data.id = conn.id;
                         item.send(JSON.stringify(data));
                     }
                 });

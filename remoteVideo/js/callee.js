@@ -19,7 +19,6 @@ function setupMedia() {
 }
 
 function streamSuccess(stream) {
-    localStream = stream;
     showVideoLayout();
     var localVideo = document.querySelector("#local_video");
     localVideo.src = URL.createObjectURL(stream);
@@ -38,9 +37,7 @@ function iceCandidate(ice_event) {
         signaling_server.send(
             JSON.stringify({
                 type: "new_ice_candidate",
-                userGb : 'callee',
                 candidate: ice_event.candidate,
-                id : myId
             })
         );
     }
@@ -61,9 +58,7 @@ function new_description_created(description) {
                 JSON.stringify({
                     token: 'room',
                     type: 'new_description',
-                    userGb : 'callee',
-                    sdp: description,
-                    id : myId
+                    sdp: description
                 })
             );
         },
@@ -133,7 +128,6 @@ function callee_signal_handler(event) {
     if (signal.type === "registId")
         myId = signal.id;
     else{
-        
         var peerConnection = connectionId[signal.id];
         if(peerConnection == null){
             for(var i = 0; i < peerConnections.length; i++){
@@ -156,13 +150,13 @@ function callee_signal_handler(event) {
                 handleError
             );
         }
-
         else if (signal.type === "new_ice_candidate"/* && peerConnection.localDescription.type == ''*/) {
             console.log('signal.type === "new_ice_candidate"');
             peerConnection.addIceCandidate(
                 new RTCIceCandidate(signal.candidate)
             );
-        } else if (signal.type === "new_description"  /*&& peerConnection.remoteDescription.type == ''*/) {
+        }
+        else if (signal.type === "new_description"  /*&& peerConnection.remoteDescription.type == ''*/) {
             console.log('signal.type === "new_description"');
             peerConnection.setRemoteDescription(
                 new RTCSessionDescription(signal.sdp),
