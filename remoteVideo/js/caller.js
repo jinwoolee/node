@@ -4,7 +4,10 @@ var servers;
 var myId;
 var peerConnections = [];
 var connectionId = {};
-var currentPeerConnection;
+//var currentPeerConnection;
+var currentCalleeId;
+var callerDescription;
+var eventStream = [];
 
 function showVideoLayout() {
     document.querySelector("#loading_state").style.display = "none";
@@ -57,10 +60,12 @@ function makePeerConnection(stream) {
             if(remoteVideo.src == ""){
                 remoteVideo.src = URL.createObjectURL(event.stream);
                 remoteVideo.play();
+                eventStream.push(event.stream);
             }
             else{
                 remoteVideo2.src = URL.createObjectURL(event.stream);
                 remoteVideo2.play();
+                eventStream.push(event.stream);
             }
                 
             document.getElementById("loading_state").style.display = "none";
@@ -95,6 +100,7 @@ function iceCandidate(ice_event) {
         signaling_server.send(
             JSON.stringify({
                 type: "new_ice_candidate",
+                userGb : 'caller',
                 candidate: ice_event.candidate
             })
         );
@@ -107,8 +113,9 @@ function handleError(error) {
 
 function new_description_created(description) {
     console.log('new_description_created');
-    currentPeerConnection.setLocalDescription(
-    //peerConnection.setLocalDescription(
+    var peerConnection = connectionId[currentCalleeId];
+    
+    peerConnection.setLocalDescription(
         description,
         function () {
             console.log('new_description_created send');
@@ -116,6 +123,7 @@ function new_description_created(description) {
                 JSON.stringify({
                     token: 'room',
                     type: 'new_description',
+                    userGb : 'caller',
                     sdp: description
                 })
             );
@@ -134,13 +142,13 @@ function caller_signal_handler(event) {
     else{
         var peerConnection = connectionId[signal.id];
         if(peerConnection == null){
-            //peerConnections.forEach(function(item){});
             for(var i = 0; i < peerConnections.length; i++){
                 var item =  peerConnections[i];
                 if(item.use == false){
                     item.use = true;
                     peerConnection = item;
                     currentPeerConnection = item;
+                    currentCalleeId = signal.id;
                     break;
                 }
             }

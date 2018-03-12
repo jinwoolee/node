@@ -8,6 +8,13 @@ function showVideoLayout() {
     document.querySelector("#open_call_state").style.display = "block";
 }
 
+function setupMedia() {
+    getUserMedia({
+        audio: true,
+        video: true
+    }, streamSuccess, streamError);
+}
+
 function streamSuccess(stream) {
     localStream = stream;
     showVideoLayout();
@@ -22,20 +29,15 @@ function streamError(error) {
     console.debug('streamError');
 }
 
-function setupMedia() {
-    getUserMedia({
-        audio: true,
-        video: true
-    }, streamSuccess, streamError);
-}
-
 function iceCandidate(ice_event) {
     if (ice_event.candidate) {
         console.log("callee ICE candidate");
         signaling_server.send(
             JSON.stringify({
                 type: "new_ice_candidate",
-                candidate: ice_event.candidate
+                userGb : 'callee',
+                candidate: ice_event.candidate,
+                id : myId
             })
         );
     }
@@ -55,40 +57,14 @@ function new_description_created(description) {
                 JSON.stringify({
                     token: 'room',
                     type: 'new_description',
-                    sdp: description
+                    userGb : 'callee',
+                    sdp: description,
+                    id : myId
                 })
             );
         },
         handleError
     );
-}
-
-// handle signals as a caller
-function callee_signal_handler(event) {
-    var signal = JSON.parse(event.data);
-    console.log('signal', signal);
-
-    if (signal.type === "registId")
-        myId = signal.id;
-    else{    
-        if (signal.type === "new_ice_candidate") {
-            peerConnection.addIceCandidate(
-                new RTCIceCandidate(signal.candidate)
-            );
-        } else if (signal.type === "new_description") {
-            peerConnection.setRemoteDescription(
-                new RTCSessionDescription(signal.sdp),
-                function () {
-                    if (peerConnection.remoteDescription.type == "offer") {
-                        peerConnection.createAnswer(new_description_created, handleError);
-                    }
-                },
-                handleError
-            );
-        } else {
-            // extend with your own signal types here
-        }
-    }
 }
 
 function makePeerConnection(stream) {
@@ -128,6 +104,36 @@ function makePeerConnection(stream) {
             })
         );
     };
+}
+
+// handle signals as a caller
+function callee_signal_handler(event) {
+    var signal = JSON.parse(event.data);
+    console.log('signal', signal);
+
+    if (signal.type === "registId")
+        myId = signal.id;
+    else{    
+        if (signal.type === "new_ice_candidate" && peerConnection.localDescription.type == '') {
+            console.log('signal.type === "new_ice_candidate"');
+            peerConnection.addIceCandidate(
+                new RTCIceCandidate(signal.candidate)
+            );
+        } else if (signal.type === "new_description"  && peerConnection.remoteDescription.type == '') {
+            console.log('signal.type === "new_description"');
+            peerConnection.setRemoteDescription(
+                new RTCSessionDescription(signal.sdp),
+                function () {
+                    if (peerConnection.remoteDescription.type == "offer") {
+                        peerConnection.createAnswer(new_description_created, handleError);
+                    }
+                },
+                handleError
+            );
+        } else {
+            // extend with your own signal types here
+        }
+    }
 }
 
 setupMedia();
