@@ -6,7 +6,7 @@ var websocket = require('websocket').server;
 
 var httpServer = http.createServer(function (req, res) {
     
-    if(req.url.indexOf('caller.html') > 0 ||
+    if(req.url.indexOf('caller') > 0 ||
        req.url.indexOf('callee.html') > 0 ||
        req.url.indexOf('.js') > 0 || 
        req.url.indexOf('.css') > 0 )
@@ -40,7 +40,7 @@ websocket_server.on('connect', function(conn){
         //console.log('conn.on message');
         if(message.type == 'utf8'){
             data = JSON.parse(message.utf8Data);
-            console.log('conn.on message conn.id : ', conn.id, ' / data.type : ', data.type );
+            console.log('conn.on message data.type : ', data.type );
 
             /*if(data.userGb == 'callee' && 
                (data.type == 'new_description' || data.type == 'new_ice_candidate')){
@@ -53,13 +53,24 @@ websocket_server.on('connect', function(conn){
                     connectionList[0].send(JSON.stringify(data));
             }
             else{*/
-                connectionList.forEach(function(item){
-                    if(item.id != conn.id){
-                        console.log("from ", conn.id, ' ==> to : ', item.id, '\n');
-                        //data.id = conn.id;
-                        item.send(JSON.stringify(data));
-                    }
-                });
+                if(data.type == 'new_description'){
+                    connectionList.forEach(function(item){
+                        console.log('connectionList id : ', item.id, ', data.to : ', data.to, '\n');
+                        if(item.id == data.to){   
+                            data.id = conn.id;
+                            item.send(JSON.stringify(data));
+                        }
+                    });
+                }
+                else{
+                    connectionList.forEach(function(item){
+                        if(item.id != conn.id){
+                            //console.log("from ", conn.id, ' ==> to : ', item.id, '\n');
+                            data.id = conn.id;
+                            item.send(JSON.stringify(data));
+                        }
+                    });
+                }
             //}
         }
     });

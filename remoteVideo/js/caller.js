@@ -1,3 +1,15 @@
+function qs(search_for) {
+    var query = window.location.search.substring(1);
+    var parms = query.split('&');
+    for (var i=0; i<parms.length; i++) {
+        var pos = parms[i].indexOf('=');
+        if (pos > 0  && search_for == parms[i].substring(0,pos)) {
+            return parms[i].substring(pos+1);;
+        }
+    }
+    return "";
+}
+
 var signaling_server;
 var servers;
 var myId;
@@ -37,8 +49,7 @@ function iceCandidate(ice_event) {
         signaling_server.send(
             JSON.stringify({
                 type: "new_ice_candidate",
-                candidate: ice_event.candidate,
-                id : myId
+                candidate: ice_event.candidate
             })
         );
     }
@@ -48,33 +59,13 @@ function handleError(error) {
     console.debug("error ", error);
 }
 
-function new_description_created(description) {
-    console.log('new_description_created');
-    var peerConnection = connectionId[currentCalleeId];
-    
-    peerConnection.setLocalDescription(
-        description,
-        function () {
-            console.log('new_description_created send');
-            signaling_server.send(
-                JSON.stringify({
-                    token: 'room',
-                    type: 'new_description',
-                    sdp: description,
-                    id : myId
-                })
-            );
-        },
-        handleError
-    );
-}
 function makePeerConnection(stream) {
     /*var stun_server = "stun.l.google.com:19302";
     peerConnection = new RTCPeerConnection({"iceServers": [
         { "url": "stun:" + stun_server },
     ]});*/
 
-    for(var i = 0; i < 3; i++){
+    for (var i = 0; i < 3; i++) {
         var peerConnection = new RTCPeerConnection(servers);
         peerConnection.use = false;
         peerConnection.onicecandidate = iceCandidate;
@@ -83,26 +74,25 @@ function makePeerConnection(stream) {
         // display remote video streams when they arrive using local <video> MediaElement
         peerConnection.onaddstream = function (event) {
             console.log('onaddStream');
-            
+
             var remoteVideo = document.querySelector("#remote_video");
             var remoteVideo2 = document.querySelector("#remote_video2");
 
-            if(remoteVideo.src == ""){
+            if (remoteVideo.src == "") {
                 remoteVideo.src = URL.createObjectURL(event.stream);
                 remoteVideo.play();
-            }
-            else{
+            } else {
                 remoteVideo2.src = URL.createObjectURL(event.stream);
                 remoteVideo2.play();
             }
-                
+
             document.getElementById("loading_state").style.display = "none";
             document.getElementById("open_call_state").style.display = "block";
-            
+
         };
         peerConnections.push(peerConnection);
     }
-    
+
     signaling_server = new WebSocket('ws://localhost:3000');
 
     signaling_server.onopen = function () {
@@ -115,13 +105,30 @@ function makePeerConnection(stream) {
         signaling_server.send(
             JSON.stringify({
                 type: 'join',
-                token: 'room',
-                id : myId
+                token: 'room'
             })
         );
     };
 }
 
+function getConnection(id) {
+    var peerConnection = connectionId[id];
+
+    if (peerConnection == undefined) {
+        for (var i = 0; i < peerConnections.length; i++) {
+            var item = peerConnections[i];
+            if (item.use == false) {
+                item.use = true;
+                peerConnection = item;
+                peerConnection.id = id;
+                connectionId[id] = peerConnection;
+                break;
+            }
+        }
+    }
+
+    return peerConnection;
+}
 
 // handle signals as a caller
 function caller_signal_handler(event) {
@@ -130,52 +137,106 @@ function caller_signal_handler(event) {
 
     if (signal.type === "registId")
         myId = signal.id;
-    else{
-        
-        var peerConnection = connectionId[signal.id];
-        
-        if(peerConnection == null){
-            for(var i = 0; i < peerConnections.length; i++){
-                var item =  peerConnections[i];
-                if(item.use == false){
-                    item.use = true;
-                    peerConnection = item;
-                    currentCalleeId = signal.id;
-                    connectionId[signal.id] = peerConnection;
-                    break;
-                }
-            }
-        }
-        console.log('caller_signal_handler : ', signal.id, ' / peerConneion is null?' , peerConnection == undefined);
+    else {
+
+        var peerConnection = getConnection(signal.id);
+        console.log('caller_signal_handler  signal.type : ' , signal.type, ' / conn.id : ', signal.id);
 
         if (signal.type === "join") {
-            console.log('join from : ', signal.id);
-            peerConnection.id = signal.id;
+            
             peerConnection.createOffer(
-                new_description_created,
-                handleError
-            );
-        }
-        else if (signal.type === "new_ice_candidate") {
-            console.log('new_ice_candidate : ', signal.id);
-            peerConnection.addIceCandidate(
-                new RTCIceCandidate(signal.candidate)
-            );
-        }
-        else if (signal.type === "new_description") {
-            console.log("caller signal handler : new_description");
-            peerConnection.setRemoteDescription(
-                new RTCSessionDescription(signal.sdp),
-                function () {
-                    if (peerConnection.remoteDescription.type == "answer") {
-                        console.log('peerConnection.remoteDescription.type == "answer"');
-                        // extend with your own custom answer handling here
-                    }
+                function (description) {
+                    peerConnection.setLocalDescription(
+                        description,
+                        function () {
+                            console.log('new_description_created send');
+                            signaling_server.send(
+                                JSON.stringify({
+                                    token: 'room',
+                                    type: 'new_description',
+                                    reqType: 'request',
+                                    from: myId,
+                                    to: signal.id,
+                                    sdp: description
+                                })
+                            );
+                        },
+                        handleError
+                    );
                 },
                 handleError
             );
-        } else {
-            // extend with your own signal types here
+        } else if (signal.type === "new_ice_candidate") {
+            peerConnection.addIceCandidate(
+                new RTCIceCandidate(signal.candidate)
+            );
+        } else if (signal.type === "new_description") {
+            if(signal.reqType == 'request'){
+                peerConnection.setRemoteDescription(
+                    new RTCSessionDescription(signal.sdp),
+                    function () {
+                        peerConnection.createAnswer(function (description) {
+                            peerConnection.setLocalDescription(
+                                description,
+                                function () {
+                                    console.log('new_description_created send');
+                                    signaling_server.send(
+                                        JSON.stringify({
+                                            token: 'room',
+                                            type: 'new_description',
+                                            reqType: 'response',
+                                            from: myId,
+                                            to: signal.id,
+                                            sdp: description
+                                        })
+                                    );
+                                },
+                                handleError
+                            );
+                        }, handleError);
+                    },
+                    handleError
+                );
+            }
+            else if (signal.reqType == 'response'){
+                peerConnection.setRemoteDescription(
+                    new RTCSessionDescription(signal.sdp),
+                    function () {
+                        console.log('peerConnection.remoteDescription.type == "answer"');                        
+                    },
+                    handleError
+                );
+            }
+            
+            /*peerConnection.setRemoteDescription(
+                new RTCSessionDescription(signal.sdp),
+                function () {
+                    if (peerConnection.remoteDescription.type == "offer") {
+                        console.log('peerConnection.remoteDescription.type == "offer"');
+                        peerConnection.createAnswer(function (description) {
+                            peerConnection.setLocalDescription(
+                                description,
+                                function () {
+                                    console.log('new_description_created send');
+                                    signaling_server.send(
+                                        JSON.stringify({
+                                            token: 'room',
+                                            type: 'new_description',
+                                            reqType: 'response',
+                                            sdp: description,
+                                            id: myId
+                                        })
+                                    );
+                                },
+                                handleError
+                            );
+                        }, handleError);
+                    } else if (peerConnection.remoteDescription.type == "answer") {
+                        console.log('peerConnection.remoteDescription.type == "answer"');
+                    }
+                },
+                handleError
+            );*/
         }
     }
 }
