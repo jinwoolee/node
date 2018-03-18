@@ -4,3 +4,5 @@ socketIo/node_modules/*
 olc/node_modules/*
 remoteVideo/node_modules/*
 samples-server-master/node_modules/*
+mariadb/node_modules/*
+kenu-node-bbs/node-bbs/node_modules/*
