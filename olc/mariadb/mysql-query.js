@@ -8,8 +8,12 @@ var connection = mysql.createConnection({
 
 connection.connect();
 
-connection.query('select * from code.CD001', function (error, results, fields) {
+connection.query('select * from code.CD001 where cd = ? ',['CD001'],  function (error, results, fields) {
   if (error) throw error;
-  console.log('The solution is: ', results[0].solution);
+
+    for(i in results){
+      console.log('result : ', results[i]);
+    }
+    
+  
 });
-conenction
