@@ -2,6 +2,18 @@ tarc/stdout.log
 tarc/error.log
 socketIo/node_modules/*
 olc/node_modules/*
+<<<<<<< HEAD
 olc/mongodb/node_modules
 remoteVideo/node_modules/*
 samples-server-master/node_modules/*
+=======
+olc/cluster/node_modules/*
+olc/qunit/node_modules/*
+remoteVideo/node_modules/*
+samples-server-master/node_modules/*
+mariadb/node_modules/*
+kenu-node-bbs/node-bbs/node_modules/*
+heroku/node-js-getting-started/node_modules/*
+heroku/node-js-getting-started/.git
+heroku/node-js-getting-started/.gitignore
+>>>>>>> refs/remotes/origin/master
