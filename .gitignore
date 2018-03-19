@@ -2,6 +2,8 @@ tarc/stdout.log
 tarc/error.log
 socketIo/node_modules/*
 olc/node_modules/*
+olc/cluster/node_modules/*
+olc/qunit/node_modules/*
 remoteVideo/node_modules/*
 samples-server-master/node_modules/*
 mariadb/node_modules/*
