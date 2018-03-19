@@ -6,3 +6,6 @@ remoteVideo/node_modules/*
 samples-server-master/node_modules/*
 mariadb/node_modules/*
 kenu-node-bbs/node-bbs/node_modules/*
+heroku/node-js-getting-started/node_modules/*
+heroku/node-js-getting-started/.git
+heroku/node-js-getting-started/.gitignore
