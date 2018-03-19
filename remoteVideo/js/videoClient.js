@@ -105,7 +105,9 @@ function makePeerConnection(stream) {
         signaling_server.send(
             JSON.stringify({
                 type: 'join',
-                token: 'room'
+                token: 'room',
+                roomNo: qs('roomNo'),
+                id: qs('userId')
             })
         );
     };
@@ -207,36 +209,6 @@ function caller_signal_handler(event) {
                     handleError
                 );
             }
-            
-            /*peerConnection.setRemoteDescription(
-                new RTCSessionDescription(signal.sdp),
-                function () {
-                    if (peerConnection.remoteDescription.type == "offer") {
-                        console.log('peerConnection.remoteDescription.type == "offer"');
-                        peerConnection.createAnswer(function (description) {
-                            peerConnection.setLocalDescription(
-                                description,
-                                function () {
-                                    console.log('new_description_created send');
-                                    signaling_server.send(
-                                        JSON.stringify({
-                                            token: 'room',
-                                            type: 'new_description',
-                                            reqType: 'response',
-                                            sdp: description,
-                                            id: myId
-                                        })
-                                    );
-                                },
-                                handleError
-                            );
-                        }, handleError);
-                    } else if (peerConnection.remoteDescription.type == "answer") {
-                        console.log('peerConnection.remoteDescription.type == "answer"');
-                    }
-                },
-                handleError
-            );*/
         }
     }
 }
