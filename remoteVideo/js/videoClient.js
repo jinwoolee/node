@@ -12,7 +12,8 @@ function qs(search_for) {
 
 var signaling_server;
 var servers;
-var myId;
+var roomNo = qs("roomNo");
+var userId = qs("userId");
 var peerConnections = [];
 var connectionId = {};
 var currentCalleeId;
@@ -79,11 +80,15 @@ function makePeerConnection(stream) {
             var remoteVideo2 = document.querySelector("#remote_video2");
 
             if (remoteVideo.src == "") {
+                remoteVideo.id = this.id;
                 remoteVideo.src = URL.createObjectURL(event.stream);
                 remoteVideo.play();
+                console.log('this.id : ', this.id, ' / remoteVideo.id : ', remoteVideo.id);
             } else {
+                remoteVideo2.id = this.id;
                 remoteVideo2.src = URL.createObjectURL(event.stream);
                 remoteVideo2.play();
+                console.log('this.id : ', this.id, ' / remoteVideo2.id : ', remoteVideo2.id);
             }
 
             document.getElementById("loading_state").style.display = "none";
@@ -106,8 +111,8 @@ function makePeerConnection(stream) {
             JSON.stringify({
                 type: 'join',
                 token: 'room',
-                roomNo: qs('roomNo'),
-                id: qs('userId')
+                roomNo: roomNo,
+                id: userId
             })
         );
     };
@@ -128,7 +133,6 @@ function getConnection(id) {
             }
         }
     }
-
     return peerConnection;
 }
 
@@ -137,78 +141,75 @@ function caller_signal_handler(event) {
     var signal = JSON.parse(event.data);
     console.log('signal', signal);
 
-    if (signal.type === "registId")
-        myId = signal.id;
-    else {
+    var peerConnection = getConnection(signal.id);
+    console.log('caller_signal_handler  signal.type : ' , signal.type, ' / conn.id : ', signal.id);
 
-        var peerConnection = getConnection(signal.id);
-        console.log('caller_signal_handler  signal.type : ' , signal.type, ' / conn.id : ', signal.id);
-
-        if (signal.type === "join") {
-            
-            peerConnection.createOffer(
-                function (description) {
-                    peerConnection.setLocalDescription(
-                        description,
-                        function () {
-                            console.log('new_description_created send');
-                            signaling_server.send(
-                                JSON.stringify({
-                                    token: 'room',
-                                    type: 'new_description',
-                                    reqType: 'request',
-                                    from: myId,
-                                    to: signal.id,
-                                    sdp: description
-                                })
-                            );
-                        },
-                        handleError
-                    );
+    if (signal.type === "close") {
+    }
+    else if (signal.type === "join") {
+        
+        peerConnection.createOffer(
+            function (description) {
+                peerConnection.setLocalDescription(
+                    description,
+                    function () {
+                        console.log('new_description_created send');
+                        signaling_server.send(
+                            JSON.stringify({
+                                token: 'room',
+                                type: 'new_description',
+                                reqType: 'request',
+                                from: userId,
+                                to: signal.id,
+                                sdp: description
+                            })
+                        );
+                    },
+                    handleError
+                );
+            },
+            handleError
+        );
+    } else if (signal.type === "new_ice_candidate") {
+        peerConnection.addIceCandidate(
+            new RTCIceCandidate(signal.candidate)
+        );
+    } else if (signal.type === "new_description") {
+        if(signal.reqType == 'request'){
+            peerConnection.setRemoteDescription(
+                new RTCSessionDescription(signal.sdp),
+                function () {
+                    peerConnection.createAnswer(function (description) {
+                        peerConnection.setLocalDescription(
+                            description,
+                            function () {
+                                console.log('new_description_created send');
+                                signaling_server.send(
+                                    JSON.stringify({
+                                        token: 'room',
+                                        type: 'new_description',
+                                        reqType: 'response',
+                                        from: userId,
+                                        to: signal.id,
+                                        sdp: description
+                                    })
+                                );
+                            },
+                            handleError
+                        );
+                    }, handleError);
                 },
                 handleError
             );
-        } else if (signal.type === "new_ice_candidate") {
-            peerConnection.addIceCandidate(
-                new RTCIceCandidate(signal.candidate)
+        }
+        else if (signal.reqType == 'response'){
+            peerConnection.setRemoteDescription(
+                new RTCSessionDescription(signal.sdp),
+                function () {
+                    console.log('peerConnection.remoteDescription.type == "answer"');                        
+                },
+                handleError
             );
-        } else if (signal.type === "new_description") {
-            if(signal.reqType == 'request'){
-                peerConnection.setRemoteDescription(
-                    new RTCSessionDescription(signal.sdp),
-                    function () {
-                        peerConnection.createAnswer(function (description) {
-                            peerConnection.setLocalDescription(
-                                description,
-                                function () {
-                                    console.log('new_description_created send');
-                                    signaling_server.send(
-                                        JSON.stringify({
-                                            token: 'room',
-                                            type: 'new_description',
-                                            reqType: 'response',
-                                            from: myId,
-                                            to: signal.id,
-                                            sdp: description
-                                        })
-                                    );
-                                },
-                                handleError
-                            );
-                        }, handleError);
-                    },
-                    handleError
-                );
-            }
-            else if (signal.reqType == 'response'){
-                peerConnection.setRemoteDescription(
-                    new RTCSessionDescription(signal.sdp),
-                    function () {
-                        console.log('peerConnection.remoteDescription.type == "answer"');                        
-                    },
-                    handleError
-                );
-            }
         }
     }
 }

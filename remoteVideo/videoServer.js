@@ -21,27 +21,28 @@ var connectionList = [];
 var idIndex = 0;
 websocket_server.on('connect', function(conn){
 
+    //임의 아이디 부여
+    //conn.id = 'ID_' + idIndex++;
+    //conn.send(JSON.stringify({type : 'registId', id : conn.id}));
+
+    connectionList.push(conn);
+    /*connectionList.forEach(function(item, idx){
+        console.log('connectionId : ', item.id);
+    });*/
+    
     conn.on('message', function(message) {
         //console.log('conn.on message');
         if(message.type == 'utf8'){
             data = JSON.parse(message.utf8Data);
             console.log('conn.on message data.type : ', data.type );
-
+            
             if(data.type == 'join'){
-                //임의 아이디 부여
-                //conn.id = 'ID_' + idIndex++;
-
-                console.log("roomNo : ", data.roomNo, " / id : ", data.id);
-                if(data.id == undefined)
-                    return false;
-
                 conn.id = data.id;
-                connectionList.push(conn);
-
-                conn.send(JSON.stringify({type : 'registId', id : conn.id}));
-
-                connectionList.forEach(function(item, idx){
-                    console.log('connectionId : ', item.id);
+                connectionList.forEach(function(item){
+                    if(item.id != conn.id){
+                        data.id = conn.id;
+                        item.send(JSON.stringify(data));
+                    }
                 });
             }
             else if(data.type == 'new_description'){
@@ -74,6 +75,12 @@ websocket_server.on('connect', function(conn){
         connectionList.forEach(function(item, idx){
             if(item.id == conn.id)
                 delIdx = idx;
+            else{
+                item.send(JSON.stringify({
+                    type: 'close',
+                    id : conn.id
+                }));
+            }
         });
 
         if(delIdx > 0)
