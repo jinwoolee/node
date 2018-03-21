@@ -79,16 +79,17 @@ function makePeerConnection(stream) {
             var remoteVideo = document.querySelector("#remote_video");
             var remoteVideo2 = document.querySelector("#remote_video2");
 
-            if (remoteVideo.src == "") {
-                remoteVideo.id = this.id;
+            var userid = remoteVideo.dataset.userid || '';
+            if (userid == '' ) {
+                remoteVideo.dataset.userid = this.id;
                 remoteVideo.src = URL.createObjectURL(event.stream);
                 remoteVideo.play();
-                console.log('this.id : ', this.id, ' / remoteVideo.id : ', remoteVideo.id);
+                console.log('this.id : ', this.id, ' / remoteVideo.dataset.userid : ', remoteVideo.dataset.userid);
             } else {
-                remoteVideo2.id = this.id;
+                remoteVideo2.dataset.userid = this.id;
                 remoteVideo2.src = URL.createObjectURL(event.stream);
                 remoteVideo2.play();
-                console.log('this.id : ', this.id, ' / remoteVideo2.id : ', remoteVideo2.id);
+                console.log('this.id : ', this.id, ' / remoteVideo2.dataset.userid : ', remoteVideo2.dataset.userid);
             }
 
             document.getElementById("loading_state").style.display = "none";
@@ -145,6 +146,15 @@ function caller_signal_handler(event) {
     console.log('caller_signal_handler  signal.type : ' , signal.type, ' / conn.id : ', signal.id);
 
     if (signal.type === "close") {
+        
+        var id = signal.id;
+
+        peerConnection.use = false;
+        peerConnection.id = '';
+        var remoteVideo = document.querySelector("[data-userid='" + id + "']");
+        console.log("close remoteVideo : ", remoteVideo.id, ", ", remoteVideo.dataset.userid);
+        remoteVideo.dataset.userid = '';
+        remoteVideo.src=''; //화면 초기화 방법, 다른방법이 있는지 찾아보자
     }
     else if (signal.type === "join") {
         
