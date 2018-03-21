@@ -105,7 +105,7 @@ function makePeerConnection(stream) {
         peerConnections.push(peerConnection);
     }
 
-    signaling_server = new WebSocket('ws://localhost:3000');
+    signaling_server = new WebSocket('wss://iothome.iptime.org');
 
     signaling_server.onopen = function () {
         console.log('signaling_server open');

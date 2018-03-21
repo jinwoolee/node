@@ -1,10 +1,14 @@
 var static = require('node-static');
 var file = new(static.Server)();
-var http = require('http');
+var http = require('https');
 var fs = require('fs');
 var websocket = require('websocket').server;
 
 var httpServer = http.createServer(
+    {
+        key:  fs.readFileSync("/home/pi/key/iothome_iptime_org.key"),
+        cert: fs.readFileSync("/home/pi/key/iothome_iptime_org.crt")
+    },
     function (req, res) {
         if(req.url.indexOf('videoClient.html') > 0 ||
         req.url.indexOf('.js') > 0 || 
@@ -90,4 +94,4 @@ websocket_server.on('connect', function(conn){
     });    
 });
 
-httpServer.listen(3000);
+httpServer.listen(8079);
