@@ -10,7 +10,7 @@ var httpServer = http.createServer(
         cert: fs.readFileSync("/home/pi/key/iothome_iptime_org.crt")
     },
     function (req, res) {
-        if(req.url.indexOf('videoClient.html') > 0 ||
+        if(req.url.indexOf('videoClientHttps.html') > 0 ||
         req.url.indexOf('.js') > 0 || 
         req.url.indexOf('.css') > 0 )
                 file.serve(req, res);
